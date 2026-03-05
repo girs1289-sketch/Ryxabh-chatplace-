@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>Ryxabh Chatplace</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#0f0f1c,#2b2b44);
+color:white;
+height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+/* glass */
+
+.glass{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(20px);
+border-radius:20px;
+}
+
+/* login */
+
+#login{
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+gap:10px;
+}
+
+input{
+padding:12px;
+border:none;
+border-radius:12px;
+}
+
+button{
+padding:10px 20px;
+border:none;
+border-radius:20px;
+background:#4ea1ff;
+color:white;
+cursor:pointer;
+}
+
+/* app */
+
+#app{
+display:none;
+flex-direction:column;
+height:100vh;
+}
+
+header{
+display:flex;
+justify-content:space-between;
+padding:15px;
+}
+
+/* messages */
+
+#messages{
+flex:1;
+overflow:auto;
+padding:10px;
+}
+
+.msg{
+margin:6px;
+padding:10px;
+border-radius:16px;
+max-width:70%;
+animation:pop .25s;
+}
+
+.user{
+background:#2c2c45;
+}
+
+.owner{
+background:linear-gradient(45deg,gold,orange);
+color:black;
+box-shadow:0 0 10px gold;
+}
+
+/* animation */
+
+@keyframes pop{
+0%{transform:scale(.7);opacity:0}
+100%{transform:scale(1);opacity:1}
+}
+
+/* typing */
+
+#typing{
+font-size:12px;
+opacity:.8;
+}
+
+.wave span{
+display:inline-block;
+width:6px;
+height:6px;
+background:white;
+border-radius:50%;
+margin:2px;
+animation:wave 1s infinite;
+}
+
+.wave span:nth-child(2){animation-delay:.2s}
+.wave span:nth-child(3){animation-delay:.4s}
+
+@keyframes wave{
+0%,100%{transform:scale(.3)}
+50%{transform:scale(1)}
+}
+
+/* input */
+
+#inputArea{
+display:flex;
+padding:10px;
+}
+
+#msg{
+flex:1;
+}
+
+/* nav */
+
+nav{
+display:flex;
+justify-content:space-around;
+padding:10px;
+}
+
+.tab{
+cursor:pointer;
+}
+
+/* pages */
+
+.page{
+display:none;
+flex:1;
+overflow:auto;
+padding:15px;
+}
+
+.list{
+background:#333;
+margin:5px;
+padding:10px;
+border-radius:12px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN -->
+
+<div id="login">
+
+<h1>💬 Ryxabh Chatplace</h1>
+
+<input id="name" placeholder="Enter name">
+
+<button onclick="login()">Enter Chat</button>
+
+</div>
+
+<!-- APP -->
+
+<div id="app">
+
+<header class="glass">
+
+<div id="title">Global Chat</div>
+
+<div>🟢 <span id="online">0</span> online</div>
+
+</header>
+
+<!-- GLOBAL CHAT -->
+
+<div id="global" class="page">
+
+<div id="messages"></div>
+
+<div id="typing"></div>
+
+<div id="inputArea">
+
+<input id="msg" placeholder="Message">
+
+<button onclick="send()">Send</button>
+
+</div>
+
+</div>
+
+<!-- PRIVATE -->
+
+<div id="private" class="page">
+
+<h3>Private Chats</h3>
+
+<div class="list">User123</div>
+<div class="list">VIP Rahul</div>
+<div class="list">VVIP Dev</div>
+
+</div>
+
+<!-- GROUPS -->
+
+<div id="groups" class="page">
+
+<h3>Groups</h3>
+
+<div class="list">Tech Chat</div>
+<div class="list">Gaming Squad</div>
+
+</div>
+
+<!-- PROFILE -->
+
+<div id="profile" class="page">
+
+<h2>Profile</h2>
+
+<p id="profileName"></p>
+
+<button onclick="alert('Premium purchase system')">
+Upgrade to Premium
+</button>
+
+</div>
+
+<nav class="glass">
+
+<div class="tab" onclick="showPage('global')">🌐</div>
+
+<div class="tab" onclick="showPage('private')">💬</div>
+
+<div class="tab" onclick="showPage('groups')">👥</div>
+
+<div class="tab" onclick="showPage('profile')">👤</div>
+
+</nav>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+const socket = io()
+
+let user={}
+
+function login(){
+
+const name=document.getElementById("name").value
+
+if(!name)return
+
+user={
+name:name,
+role:"user"
+}
+
+socket.emit("join",user)
+
+document.getElementById("login").style.display="none"
+document.getElementById("app").style.display="flex"
+
+document.getElementById("profileName").innerText="Name: "+name
+
+showPage("global")
+
+}
+
+function showPage(id){
+
+document.querySelectorAll(".page").forEach(p=>p.style.display="none")
+
+document.getElementById(id).style.display="block"
+
+document.getElementById("title").innerText=id
+
+}
+
+function send(){
+
+const text=document.getElementById("msg").value
+
+if(!text)return
+
+socket.emit("message",text)
+
+document.getElementById("msg").value=""
+
+}
+
+socket.on("message",(data)=>{
+
+const div=document.createElement("div")
+
+div.className="msg "+(data.role==="owner"?"owner":"user")
+
+div.innerHTML="<b>"+data.name+"</b><br>"+data.text
+
+document.getElementById("messages").appendChild(div)
+
+})
+
+socket.on("system",(msg)=>{
+
+const div=document.createElement("div")
+
+div.innerHTML="<i>"+msg+"</i>"
+
+document.getElementById("messages").appendChild(div)
+
+})
+
+socket.on("online",(count)=>{
+
+document.getElementById("online").innerText=count
+
+})
+
+</script>
+
+</body>
+</html>
